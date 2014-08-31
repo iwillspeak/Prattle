@@ -19,8 +19,8 @@ class Token
       @type = :number
       @value = t.to_i
     else
-      @type = :operator
-      @value = t.to_sym
+      @type = t.to_sym
+      @value = nil
     end
   end
 
@@ -73,6 +73,13 @@ class TokenStream
     @current_token
   end
 
+  ## Check for Token Match
+  #
+  # Returns true if the next token has the rquired value
+  def match(type)
+    return peek.type == type
+  end
+
   ## Chomp The Next Token
   #
   # Eats up a Token of input, making sure that it is the rquired type
@@ -104,26 +111,38 @@ class Parser
     @ts = token_stream
   end
 
+  @@infix_types = [ :+, :- ]
+
   ## Parse Expression
   #
   # Parses the current token stream and returns the next Expression in
   # it
 
   def parse_expression
-    return if @ts.peek.type == :EOF
+
+    return if @ts.match :EOF
+
     lhs = parse_value
+
+    type = @ts.peek.type
+    
+    return unless @@infix_types.include? type
+
+    op = @ts.chomp type
     rhs = parse_expression
-    [lhs, rhs]
+    [lhs, op, rhs]
   end
+
+  @@prefix_types = [ :number, :identifier, :+, :- ]
 
   ## Parse Value
   #
   # Parse the representation of a value (number or variable reference)
   
   def parse_value
-    return @ts.chomp :number if @ts.peek.type == :number
-    return @ts.chomp :identifier if @ts.peek.type == :identifier
-    raise ParseError.new [:number, :identifier], @ts.peek
+    type = @ts.peek.type
+    return @ts.chomp type if @@prefix_types.include? type
+    raise ParseError.new @@prefix_types, @ts.peek
   end
       
 end
