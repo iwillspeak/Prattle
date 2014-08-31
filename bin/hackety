@@ -12,13 +12,16 @@ class Token
   ## Create a Token from a String
 
   def initialize(t)
-     if t =~ /-?\d+/
-       @type = :number
-       @value = t.to_i
-     else
-       @type = :operator
-       @value = t.to_sym
-     end
+    if t =~ /[a-z_]+/
+      @type = :identifier
+      @value = t
+    elsif t =~ /-?\d+/
+      @type = :number
+      @value = t.to_i
+    else
+      @type = :operator
+      @value = t.to_sym
+    end
   end
 
   def to_s
@@ -41,8 +44,8 @@ end
 
 class ParseError < RuntimeError
   
-  def initialize(string)
-    super "parse error: #{string}"
+  def initialize(expected, found)
+    super "parse error: expected #{expected} but found #{found}"
   end
 end
 
@@ -76,7 +79,7 @@ class TokenStream
 
   def chomp(type)
     cur = peek
-    raise ParseError.new "expecting token #{type} but found #{cur}" if cur.type != type
+    raise ParseError.new type, cur if cur.type != type
     @current_token = nil
     cur
   end
@@ -84,29 +87,45 @@ end
 
 class Parser
 
-
   ## Parse String
   #
   # Converts a string into a stream of tokens and parses it ito a
   # structured representation
 
   def self.parse(block)
-    ts = TokenStream.new block
-
-    puts parse_stream(ts).to_s
+    p = Parser.new TokenStream.new block
+    puts p.parse_expression.to_s
   end
 
-  ## Parse a Token Stream
+  ## Create a Parser from a TokenStream
   #
-  # Parses a stream of tokens into a strucutred representation of the expression
 
-  def self.parse_stream(ts)
-    return if ts.peek.type == :EOF
-    lhs = ts.chomp :number
-    rhs = parse_stream ts
+  def initialize(token_stream)
+    @ts = token_stream
+  end
+
+  ## Parse Expression
+  #
+  # Parses the current token stream and returns the next Expression in
+  # it
+
+  def parse_expression
+    return if @ts.peek.type == :EOF
+    lhs = parse_value
+    rhs = parse_expression
     [lhs, rhs]
   end
 
+  ## Parse Value
+  #
+  # Parse the representation of a value (number or variable reference)
+  
+  def parse_value
+    return @ts.chomp :number if @ts.peek.type == :number
+    return @ts.chomp :identifier if @ts.peek.type == :identifier
+    raise ParseError.new [:number, :identifier], @ts.peek
+  end
+      
 end
 
 Parser.parse $*.join(" ")
