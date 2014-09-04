@@ -20,7 +20,7 @@ module Hackety
         @value = t.to_i
       else
         @type = t.to_sym
-        @value = nil
+        @value = t.to_sym
       end
     end
 
@@ -29,7 +29,7 @@ module Hackety
     end
   end
 
-  ## End of File Toke
+  ## End of File Token
   #
   # This token is returned indefinitely when there are no more tokens in
   # a TokenStream
@@ -57,7 +57,7 @@ module Hackety
   class TokenStream
 
     def initialize(string)
-      @iter = string.split(/\b/).keep_if { |t| t.strip != "" }.map { |t| Token.new t }.each
+      @iter = string.split(/\b|\s+/).keep_if { |t| t.strip != "" }.map { |t| Token.new t.strip }.each
       @current_token = nil
     end
 

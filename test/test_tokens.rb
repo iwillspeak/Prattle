@@ -97,4 +97,45 @@ class LexerTest < Test::Unit::TestCase
     assert ts.peek.type == :EOF
   end
 
+  def test_operators
+
+    values = [ "-", "+", "=", "||", "--", "++", "*", "^" ]
+
+    ts = create_token_stream values.join " "
+    
+    values.each do |value|
+      assert ts.peek.type == value.to_sym
+      assert ts.peek.value == value.to_sym
+      assert ts.chomp value.to_sym
+    end
+
+    assert ts.match :EOF
+  end
+
+  def test_prefix_postfix_operators
+
+    ts = create_token_stream "-1 + --2++"
+
+    assert ts.chomp :-
+    assert ts.chomp :number
+    assert ts.chomp :+
+    assert ts.chomp "--".to_sym
+    assert ts.chomp :number
+    assert ts.chomp "++".to_sym
+    assert ts.chomp :EOF
+  end
+
+  def test_infix_operators
+    ts = create_token_stream "a+b*4/2"
+
+    assert ts.chomp :identifier
+    assert ts.chomp :+
+    assert ts.chomp :identifier
+    assert ts.chomp :*
+    assert ts.chomp :number
+    assert ts.chomp :/
+    assert ts.chomp :number
+    assert ts.chomp :EOF
+  end
+
 end
