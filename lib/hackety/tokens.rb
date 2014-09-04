@@ -15,7 +15,7 @@ module Hackety
       if t =~ /[a-z_]+/
         @type = :identifier
         @value = t
-      elsif t =~ /-?\d+/
+      elsif t =~ /\d+/
         @type = :number
         @value = t.to_i
       else
@@ -57,7 +57,7 @@ module Hackety
   class TokenStream
 
     def initialize(string)
-      @iter = string.split.map { |t| Token.new t }.each
+      @iter = string.split(/\b/).keep_if { |t| t.strip != "" }.map { |t| Token.new t }.each
       @current_token = nil
     end
 

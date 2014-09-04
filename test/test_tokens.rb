@@ -74,6 +74,7 @@ class LexerTest < Test::Unit::TestCase
     ts = create_token_stream values.join(" ")
 
     values.each do |value|
+
       tok = ts.peek
 
       assert tok.type == :identifier
@@ -81,6 +82,19 @@ class LexerTest < Test::Unit::TestCase
 
       assert ts.chomp :identifier
     end
+  end
+
+  def test_underscored_identifier
+    
+    ts = create_token_stream "foo_bar"
+
+    tok = ts.peek
+    assert tok.type == :identifier
+    assert tok.value == "foo_bar"
+    assert ts.match :identifier
+    assert ts.chomp :identifier
+
+    assert ts.peek.type == :EOF
   end
 
 end
