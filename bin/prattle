@@ -1,6 +1,22 @@
 #! /usr/bin/env ruby
 
 require 'prattle/tokens'
+require 'prattle/expressions'
+
+class ValueParselet
+
+  def parse(parser, token)
+    return Prattle::ValueExpression.new token.value
+  end
+end
+
+class PrefixParselet
+
+  def parse(parser, token)
+    expression = parser.parse_expression
+    return Prattle::PrefixOperatorExpression.new token.value, expression
+  end
+end
 
 class Parser
 
@@ -10,8 +26,8 @@ class Parser
   # structured representation
 
   def self.parse(block)
-    p = Parser.new TokenStream.new block
-    puts p.parse_expression.to_s
+    p = Parser.new Prattle::TokenStream.new block
+    puts p.parse_expression
   end
 
   ## Create a Parser from a TokenStream
@@ -21,39 +37,30 @@ class Parser
     @ts = token_stream
   end
 
-  @@infix_types = [ :+, :- ]
-
   ## Parse Expression
   #
   # Parses the current token stream and returns the next Expression in
   # it
 
   def parse_expression
+    tok = @ts.peek
+    @ts.chomp tok.type
 
-    return if @ts.match :EOF
+    parselet = @@prefix_types[tok.type]
 
-    lhs = parse_value
+    if !parselet
+      raise Prattle::ParseError.new @@prefix_types.keys, tok
+    end
 
-    type = @ts.peek.type
-    
-    return unless @@infix_types.include? type
-
-    op = @ts.chomp type
-    rhs = parse_expression
-    [lhs, op, rhs]
+    return parselet.parse(self, tok)
   end
 
-  @@prefix_types = [ :number, :identifier, :+, :- ]
-
-  ## Parse Value
-  #
-  # Parse the representation of a value (number or variable reference)
-  
-  def parse_value
-    type = @ts.peek.type
-    return @ts.chomp type if @@prefix_types.include? type
-    raise ParseError.new @@prefix_types, @ts.peek
-  end
+  @@prefix_types = {
+    :number => ValueParselet.new,
+    :identifier => ValueParselet.new,
+    :+ => PrefixParselet.new,
+    :- => PrefixParselet.new
+  }
       
 end
 

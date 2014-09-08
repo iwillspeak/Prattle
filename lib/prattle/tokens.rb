@@ -1,4 +1,4 @@
-module Hackety
+module Prattle
 
   ## Token Class
   #
@@ -25,7 +25,7 @@ module Hackety
     end
 
     def to_s
-      "Token<#{type},#{value}>"
+      "#{value}"
     end
   end
 

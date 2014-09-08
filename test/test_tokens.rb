@@ -1,13 +1,13 @@
 #!/usr/bin/env ruby
 
 require 'test/unit'
-require 'hackety/tokens'
+require 'prattle/tokens'
 
 
 class LexerTest < Test::Unit::TestCase
 
   def create_token_stream(string)
-    Hackety::TokenStream.new string
+    Prattle::TokenStream.new string
   end
 
   def test_empty_stream_returns_EOF
