@@ -13,9 +13,42 @@ end
 class PrefixParselet
 
   def parse(parser, token)
-    expression = parser.parse_expression
+    expression = parser.parse_expression 0
     return Prattle::PrefixOperatorExpression.new token.value, expression
   end
+end
+
+class GroupingParselet
+  
+  def parse(parser, token)
+    expression = parser.parse_expression 0
+    return expression
+  end
+end
+
+class InfixParselet
+
+  attr_accessor :binding_power
+
+  def initialize(binding_power)
+    @binding_power = binding_power
+  end
+end
+
+class ParenParselet < InfixParselet
+
+  def parse(parser, lhs, token)
+    return lhs
+  end
+end
+
+class BinOpParselet < InfixParselet
+
+  def parse(parser, lhs, token)
+    rhs = parser.parse_expression @binding_power
+    return Prattle::BinaryOperatorExpression.new lhs, token.value, rhs
+  end
+
 end
 
 class Parser
@@ -27,7 +60,7 @@ class Parser
 
   def self.parse(block)
     p = Parser.new Prattle::TokenStream.new block
-    puts p.parse_expression
+    puts p.parse_expression 0
   end
 
   ## Create a Parser from a TokenStream
@@ -42,7 +75,7 @@ class Parser
   # Parses the current token stream and returns the next Expression in
   # it
 
-  def parse_expression
+  def parse_expression binding_power
     tok = @ts.peek
     @ts.chomp tok.type
 
@@ -52,14 +85,40 @@ class Parser
       raise Prattle::ParseError.new @@prefix_types.keys, tok
     end
 
-    return parselet.parse(self, tok)
+    lhs = parselet.parse(self, tok)
+
+    parselet = @@infix_types[@ts.peek.type]
+
+    while binding_power < get_binding_power(parselet)
+      tok = @ts.chomp @ts.peek.type
+
+      lhs = parselet.parse self, lhs, tok
+
+      parselet = @@infix_types[@ts.peek.type]
+    end
+
+    return lhs
   end
+
+  def get_binding_power(parselet)
+    return parselet ? parselet.binding_power : 0
+  end
+
+  @@infix_types = {
+    "=".to_sym => BinOpParselet.new(1),
+    :+ => BinOpParselet.new(2),
+    :- => BinOpParselet.new(2),
+    :* => BinOpParselet.new(3),
+    :/ => BinOpParselet.new(3),
+    ")".to_sym => ParenParselet.new(0)
+  }
 
   @@prefix_types = {
     :number => ValueParselet.new,
     :identifier => ValueParselet.new,
     :+ => PrefixParselet.new,
-    :- => PrefixParselet.new
+    :- => PrefixParselet.new,
+    "(".to_sym => GroupingParselet.new
   }
       
 end
