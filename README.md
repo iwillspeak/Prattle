@@ -1,4 +1,4 @@
-Hackety
+Prattle
 =======
 
-Experimentation with Precedence Parsing in Ruby
+Experimentation with Pratt-based Precedence Parsing in Ruby
