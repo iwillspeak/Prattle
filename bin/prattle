@@ -13,7 +13,7 @@ end
 class PrefixParselet
 
   def parse(parser, token)
-    expression = parser.parse_expression 0
+    expression = parser.parse_expression 100
     return Prattle::PrefixOperatorExpression.new token.value, expression
   end
 end
@@ -22,6 +22,7 @@ class GroupingParselet
   
   def parse(parser, token)
     expression = parser.parse_expression 0
+    parser.ts.chomp ")".to_sym
     return expression
   end
 end
@@ -32,13 +33,6 @@ class InfixParselet
 
   def initialize(binding_power)
     @binding_power = binding_power
-  end
-end
-
-class ParenParselet < InfixParselet
-
-  def parse(parser, lhs, token)
-    return lhs
   end
 end
 
@@ -69,6 +63,8 @@ class Parser
   def initialize(token_stream)
     @ts = token_stream
   end
+
+  attr_accessor :ts
 
   ## Parse Expression
   #
@@ -110,7 +106,6 @@ class Parser
     :- => BinOpParselet.new(2),
     :* => BinOpParselet.new(3),
     :/ => BinOpParselet.new(3),
-    ")".to_sym => ParenParselet.new(0)
   }
 
   @@prefix_types = {
