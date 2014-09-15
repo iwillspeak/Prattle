@@ -9,5 +9,4 @@ prattle(1) -- Precedence parser
 
 **Prattle** is a simple and hacky attempt at a Pratt-style precedence parser. It takes the input supplied on the command line, tokenises it, and parses it into an expression tree using precedence climbing/Pratt parsing.
 
-It’s mainly an excuse for me to mess around with parsing techniques.
-
+It's mainly an excuse for me to mess around with parsing techniques.
